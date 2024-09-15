@@ -44,6 +44,8 @@ const router = express.Router();
  *                     properties:
  *                       id:
  *                         type: integer
+ *                       name:
+ *                         type: string
  *                       day:
  *                         type: string
  *                         format: date
@@ -103,6 +105,9 @@ router.get("/spending/:userId", auth, async (req, res) => {
  *               userId:
  *                 type: integer
  *                 description: ID do usuário ao qual o gasto pertence
+ *             name:
+ *                 type: string
+ *                 description: Nome para identificar o gasto
  *               day:
  *                 type: string
  *                 description: >
@@ -205,6 +210,9 @@ router.post("/spending", auth, async (req, res) => {
  *               userId:
  *                 type: integer
  *                 description: ID do usuário ao qual o gasto pertence
+ *             name:
+ *                 type: string
+ *                 description: Nome para identificar o gasto
  *               day:
  *                 type: string
  *                 description: >
