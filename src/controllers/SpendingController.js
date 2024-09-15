@@ -105,7 +105,7 @@ router.get("/spending/:userId", auth, async (req, res) => {
  *               userId:
  *                 type: integer
  *                 description: ID do usuário ao qual o gasto pertence
- *             name:
+ *               name:
  *                 type: string
  *                 description: Nome para identificar o gasto
  *               day:
@@ -210,7 +210,7 @@ router.post("/spending", auth, async (req, res) => {
  *               userId:
  *                 type: integer
  *                 description: ID do usuário ao qual o gasto pertence
- *             name:
+ *               name:
  *                 type: string
  *                 description: Nome para identificar o gasto
  *               day:
