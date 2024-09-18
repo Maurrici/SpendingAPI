@@ -19,7 +19,7 @@ const router = express.Router();
  *     tags:
  *       - Group
  *     summary: Obtém todos os grupos
- *     description: Retorna uma lista de todos os grupos disponíveis.
+ *     description: Retorna uma lista de todos os grupos disponíveis com o total de gastos dos usuários.
  *     responses:
  *       200:
  *         description: Lista de grupos obtida com sucesso
@@ -61,11 +61,28 @@ const router = express.Router();
  *                               type: string
  *                               description: Email do usuário
  *                               example: "john.doe@email.com"
+ *                             totalSpendings:
+ *                               type: number
+ *                               description: Valor total de gastos do usuário
+ *                               example: 500.75
  *                             spendings:
  *                               type: array
  *                               description: Lista de gastos do usuário
  *                               items:
  *                                 type: object
+ *                                 properties:
+ *                                   id:
+ *                                     type: integer
+ *                                     description: ID do gasto
+ *                                     example: 1
+ *                                   name:
+ *                                     type: string
+ *                                     description: Nome do gasto
+ *                                     example: "Compra de supermercado"
+ *                                   value:
+ *                                     type: number
+ *                                     description: Valor do gasto
+ *                                     example: 100.50
  *       400:
  *         description: Erro ao obter a lista de grupos
  *     security:
@@ -74,20 +91,37 @@ const router = express.Router();
 router.get("/group", auth, async (req, res) => {
     try {
         const groups = await prisma.group.findMany({
-            select: {id: true, name: true, users: { 
-                select: { id: true, name: true, email: true, spendings: true }
-            }}
+            select: {
+                id: true,
+                name: true,
+                users: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        spendings: true
+                    }
+                }
+            }
         });
 
+        const result = groups.map(group => ({
+            ...group,
+            users: group.users.map(user => ({
+                ...user,
+                totalSpendings: user.spendings.reduce((sum, spending) => sum + spending.value, 0) // Soma dos gastos
+            }))
+        }));
+
         res.send({
-            message: "Grupos obtido com sucesso!",
-            data: groups
-        })
+            message: "Grupos obtidos com sucesso!",
+            data: result
+        });
     } catch (error) {
         res.statusCode = 400;
-        res.send({error: error.message});
+        res.send({ error: error.message });
     }
-})
+});
 
 /**
  * @swagger
@@ -96,7 +130,7 @@ router.get("/group", auth, async (req, res) => {
  *     tags:
  *       - Group
  *     summary: Obtém um grupo específico pelo ID
- *     description: Retorna as informações de um grupo identificado pelo ID.
+ *     description: Retorna as informações de um grupo identificado pelo ID, incluindo o total de gastos dos usuários.
  *     parameters:
  *       - in: path
  *         name: id
@@ -143,6 +177,10 @@ router.get("/group", auth, async (req, res) => {
  *                             type: string
  *                             description: Email do usuário
  *                             example: "john.doe@email.com"
+ *                           totalSpendings:
+ *                             type: number
+ *                             description: Valor total de gastos do usuário
+ *                             example: 500.75
  *                           spendings:
  *                             type: array
  *                             description: Lista de gastos do usuário
@@ -157,28 +195,43 @@ router.get("/group", auth, async (req, res) => {
  */
 router.get("/group/:id", auth, async (req, res) => {
     try {
-        if(!isNaN(req.params.id)){
+        if (!isNaN(req.params.id)) {
             let groupID = parseInt(req.params.id);
 
-            const group = await prisma.group.findMany({
-                where: {id: groupID},
-                select: {id: true, name: true, users: { 
-                    select: { id: true, name: true, email: true, spendings: true }
-                }}
+            const group = await prisma.group.findUnique({
+                where: { id: groupID },
+                select: {
+                    id: true,
+                    name: true,
+                    users: {
+                        select: {
+                            id: true,
+                            name: true,
+                            email: true,
+                            spendings: true
+                        }
+                    }
+                }
             });
+
+            group.users = group.users?.map(user => ({
+                ...user,
+                totalSpendings: user.spendings.reduce((sum, spending) => sum + spending.value, 0)
+            }))
 
             res.send({
                 message: "Grupo obtido com sucesso!",
                 data: group
-            })
+            });
         } else {
             res.sendStatus(400);
         }
     } catch (error) {
         res.statusCode = 400;
-        res.send({error: error.message});
+        res.send({ error: error.message });
     }
-})
+});
+
 
 /**
  * @swagger

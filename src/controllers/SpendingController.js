@@ -152,8 +152,9 @@ router.post("/spending", auth, async (req, res) => {
 
         if(!newSpending.userId || newSpending.userId == 0) throw Error("Um gasto deve estar relacionado a um usuário!");
         if(!newSpending.day || newSpending.day == "") throw Error("Dia é obrigatório!");
-        if(!newSpending.value || newSpending.password == 0) throw Error("Valor é obrigatório!");
+        if(!newSpending.value || newSpending.value == 0) throw Error("Valor é obrigatório!");
 
+        // Parsing the date
         const date = new Date(newSpending.day);
         if (isNaN(date.getTime())) {
             throw Error("Formato de data inválido!");
@@ -161,14 +162,14 @@ router.post("/spending", auth, async (req, res) => {
 
         const spending = await prisma.spending.create({
             data: {
+                name: newSpending.name,
                 day: date,
                 value: newSpending.value,
                 userId: newSpending.userId
             }
         })
 
-        res.statusCode = 201;
-        res.send({
+        res.status(201).send({
             message: "Gasto cadastrado com sucesso!",
             data: {
                 id: spending.id
@@ -176,8 +177,7 @@ router.post("/spending", auth, async (req, res) => {
         });
         
     } catch (error) {
-        res.statusCode = 400;
-        res.send({error: error.message});
+        res.status(400).send({ error: error.message });
     }
 });
 
@@ -238,25 +238,34 @@ router.put("/spending/:id", auth, async (req, res) => {
             let spendingID = parseInt(req.params.id);
             let updateSpending = req.body;
 
+            // Validação dos dados
             if(!spendingID || spendingID == 0) throw Error("ID de gasto inválido!");
             if(!updateSpending.userId || updateSpending.userId == 0) throw Error("Um gasto deve estar relacionado a um usuário!");
             if(!updateSpending.day || updateSpending.day == "") throw Error("Dia é obrigatório!");
-            if(!updateSpending.value || updateSpending.password == 0) throw Error("Valor é obrigatório!");
+            if(!updateSpending.value || updateSpending.value == 0) throw Error("Valor é obrigatório!"); // Corrigido para 'value' em vez de 'password'
 
+            // Conversão da data
             const date = new Date(updateSpending.day);
             if (isNaN(date.getTime())) {
                 throw Error("Formato de data inválido!");
             }
 
-            const spendingExist = await prisma.spending.findUnique({where: {id: spendingID}});
-            if(spendingExist == null) {
+            // Verifica se o gasto existe no banco de dados
+            const spendingExist = await prisma.spending.findUnique({ where: { id: spendingID } });
+            if (spendingExist == null) {
                 res.statusCode = 404;
-                res.send({error: "Gasto não encontrado!"})
+                res.send({ error: "Gasto não encontrado!" });
             } else {
+                // Atualização do gasto
                 const spending = await prisma.spending.update({
-                    where: {id: spendingID},
-                    data: updateSpending
-                })
+                    where: { id: spendingID },
+                    data: {
+                        name: updateSpending.name,
+                        day: date,
+                        value: updateSpending.value,
+                        userId: updateSpending.userId
+                    }
+                });
         
                 res.statusCode = 204;
                 res.send({
@@ -268,12 +277,13 @@ router.put("/spending/:id", auth, async (req, res) => {
             }
         } else {
             res.sendStatus(400);
+            res.send({ error: "Id inválido" });
         }
     } catch (error) {
         res.statusCode = 400;
-        res.send({error: error.message});
+        res.send({ error: error.message });
     }
-})
+});
 
 /**
  * @swagger

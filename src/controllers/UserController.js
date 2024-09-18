@@ -153,6 +153,9 @@ router.post("/user", async (req, res) => {
  *                 data:
  *                   type: object
  *                   properties:
+ *                     userId:
+ *                       type: int
+ *                       example: 123
  *                     token:
  *                       type: string
  *                       example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
@@ -195,6 +198,7 @@ router.post("/login", async (req, res) => {
                 else {
                     res.statusCode = 200;
                     res.json({message: "Login efetuado com sucesso!", data: {
+                        userId: user.id,
                         token
                     }})
                 }
